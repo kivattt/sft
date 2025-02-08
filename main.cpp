@@ -33,28 +33,22 @@ FT256 sft(float samples[512] /* 2x the fourier transform output */) {
 	float sineSignal[512];
 
 	for (int freq = 1; freq <= 256; freq++) {
-		/*for (int i = 0; i < 512; i++) {
+		for (int i = 0; i < 512; i++) {
 			sineSignal[i] = sin(freq * (double(i)/512) * TAU);
-		}*/
+		}
 
 		float amplitudeMatch = 0; // TODO: set to lowest value (normalize to -1?)
 		float phaseMatch = 0;
 
-		const float phaseStep = 0.01;
-		for (float phase = 0; phase <= PI; phase += phaseStep) {
-			// FIXME: Just modulo offset into the sinesignal for phase offset instead of re-calculating it
-			for (int i = 0; i < 512; i++) {
-				sineSignal[i] = sin(freq * (double(i)/512) * TAU + phase);
-			}
-
+		for (int j = 0; j < 256 / float(freq) + 1; j++) {
 			float amplitude = 0; // TODO: set to lowest value (normalize to -1?)
 			for (int i = 0; i < 512; i++) {
-				amplitude += sineSignal[i] * samples[i];
+				amplitude += sineSignal[(i + j) % 512] * samples[i];
 			}
 
 			if (amplitude > amplitudeMatch) {
 				amplitudeMatch = amplitude;
-				phaseMatch = phase;
+				phaseMatch = float(j) / float(256) * PI * float(freq);
 			}
 		}
 
@@ -79,7 +73,6 @@ FTArbitrarySize sft_arbitrary_size(float *samples, int numSamples) {
 
 	for (int i = 0; i < numFTs; i++) {
 		std::cout << "doing sft #" << i << '\n';
-		//if (i > 10) break; // DEBUGGING
 		FTs[i] = sft(&samples[i*512]);
 	}
 
@@ -152,7 +145,6 @@ int main() {
 		return 3;
 	}
 
-	//char *data = (char*)mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0);
 	float *data = (float*)mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0);
 
 	// do stuff
